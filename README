@@ -1,0 +1,18 @@
+
+Build and run Apache, MySql, PHP from source 
+for a user account without root permission:
+
+Create a directory, say sources. Then: 
+
+  cd sources
+  cp .../userlamp-makefile .
+  tar zxf .../httpd-x.y.z.tar.gz
+  tar zxf .../mysql-x.y.z.tar.gz
+  tar zxf .../php-x.y.z.tar.gz
+
+  mkdir -p $(HOME)/servers
+  make -f userlamp-makefile
+
+This will show you the build and run steps. 
+Follow the steps. 
+

@@ -1,0 +1,218 @@
+#
+# A Makefile for building user mode apache, mysql, php
+#
+
+###########################################################
+# Configuration variables
+
+# Source dirs
+SRCAPACHEDIR ?= $(wildcard httpd-2.*) #httpd-2.2.17
+SRCMYSQLDIR  ?= $(wildcard mysql-5.*) #mysql-5.5.11
+SRCPHPDIR    ?= $(wildcard php-5.*)   #php-5.3.6
+
+# Servers directory holds: apache, mysql, php, mysql-database, etc
+SERVERS      ?= $(HOME)/servers
+
+# Dest dirs for the servers
+DSTAPACHEDIR ?= apache
+DSTMYSQLDIR  ?= mysql
+DSTPHPDIR    ?= php
+
+# Data dir: the mysql database will be placed here under servers:
+DATADIR      ?= dbdata
+
+###########################################################
+
+# make sure only one src dir found:
+ifneq ($(words $(SRCAPACHEDIR)),1)
+  $(error Not one dir found: $(SRCAPACHEDIR))
+endif
+ifneq ($(words $(SRCMYSQLDIR)),1)
+  $(error Not one dir found: $(SRCMYSQLDIR))
+endif
+ifneq ($(words $(SRCPHPDIR)),1)
+  $(error Not one dir found: $(SRCPHPDIR))
+endif
+
+# targets:
+.PHONY: all bld1 bld2 bld3  help1 help2 help3  help helpadmin helpprereq
+.PHONY: prereq  bld1run bld2run bld3run
+
+help:
+
+all: bld1 bld2 bld3 help
+	
+#note: -so for loading php, -rewrite for clean drupal url
+bld1: prereq bld1run help1
+bld1run:
+	cd $(SRCAPACHEDIR) && \
+	pwd && \
+	./configure --prefix=$(SERVERS)/$(DSTAPACHEDIR) \
+			--enable-so --enable-rewrite && \
+	make && \
+	make install
+
+# MySql:
+bld2: prereq bld2run help2
+bld2run:
+	cd $(SRCMYSQLDIR) && \
+	pwd && \
+	cmake . -DCMAKE_INSTALL_PREFIX=$(SERVERS)/$(DSTMYSQLDIR) && \
+	make && \
+	make install
+  #without -DCMAKE_INSTALL_PREFIX=, use make install DESTDIR=
+
+# Php:
+# Drupal7 needs -gd, -pdo-mysql. gd needs libpng-devel
+bld3: prereq bld3run help3
+bld3run: 
+	cd $(SRCPHPDIR) && \
+	pwd && \
+	./configure --prefix=$(SERVERS)/$(DSTPHPDIR) \
+		--with-mysql=$(SERVERS)/$(DSTMYSQLDIR) \
+		--with-pdo-mysql=$(SERVERS)/$(DSTMYSQLDIR) \
+		--with-apxs2=$(SERVERS)/$(DSTAPACHEDIR)/bin/apxs \
+		--with-gd && \
+	make && \
+	make install
+
+prereq:
+	@if [ -d $(SERVERS)   ]; then exit 0; \
+		else echo SERVERS empty; exit 1; fi
+	@if [ -d $(SRCAPACHEDIR) ]; then exit 0; \
+		else echo SRCAPACHEDIR empty; exit 1; fi
+	@if [ -d $(SRCMYSQLDIR)  ]; then exit 0; \
+		else echo SRCMYSQLDIR empty; exit 1; fi
+	@if [ -d $(SRCPHPDIR)    ]; then exit 0; \
+		else echo SRCPHPDIR empty; exit 1; fi
+	@if [ ! -f $(HOME)/.my.cnf ]; then \
+		echo Setup ~/.my.cnf before setup mysql database.; \
+		echo See help2.; exit 1; fi
+
+help1:
+	@echo
+	@echo '--------------------------------------------'
+	@echo 'Apache configuration:'
+	@echo '  Edit conf/httpd.conf to set port, php ext etc. '
+	@echo '  For example, set "Listen 8080", '
+	@echo '  and "DirectoryIndex index.html index.php".'
+	@echo '--------------------------------------------'
+	@echo
+
+help2:
+	@echo
+	@echo '--------------------------------------------'
+	@echo 'MySql configuration: Put this to ~/.my.cnf'
+	@echo '  [mysqld]'
+	@echo '  user='$(USER)
+	@echo '  datadir='$(SERVERS)/$(DATADIR)
+	@echo '  socket='$(SERVERS)/$(DATADIR)/the.sock
+	@echo '  port=<port>'
+	@echo '  '
+	@echo '  [mysqld_safe]'
+	@echo '  log-error='$(SERVERS)/$(DATADIR)/the.log
+	@echo '  pid-file='$(SERVERS)/$(DATADIR)/the.pid
+	@echo '  '
+	@echo '  [mysqladmin]'
+	@echo '  socket='$(SERVERS)/$(DATADIR)/the.sock
+	@echo '  port=<port>'
+	@echo '  '
+	@echo '  [mysql]'
+	@echo '  socket='$(SERVERS)/$(DATADIR)/the.sock
+	@echo '  port=<port>'
+	@echo '  '
+	@echo '  [mysql.server]'
+	@echo '  user='$(USER)
+	@echo '  basedir='$(SERVERS)/$(DATADIR)/lib
+	@echo '  '
+	@echo 'Initialize data dir:'
+	@echo '  cd '$(SERVERS)/$(DSTMYSQLDIR)'; scripts/mysql_install_db'
+	@echo '  '
+	@echo 'Start up and setup: Go to '$(SERVERS)/$(DSTMYSQLDIR),' then'
+	@echo '  ./bin/mysqld_safe &'
+	@echo '  ./bin/mysqladmin -u root password <password>'
+	@echo '  ./bin/mysqladmin -u root -h <host> password <password>'
+	@echo '  '
+	@echo 'To clean up: make clean && rm CmakeCache.txt'
+	@echo '--------------------------------------------'
+	@echo '  '
+  #Alternatively you can run: ./bin/mysql_secure_installation
+
+
+help3:
+	@echo
+	@echo '--------------------------------------------'
+	@echo 'Php configuration: Add this to httpd.conf'
+	@echo '  <FilesMatch \.php$$>'
+	@echo '      SetHandler application/x-httpd-php'
+	@echo '  </FilesMatch>'
+	@echo '  '
+	@echo 'Copy php.ini-dev... to '$(SERVERS)/$(DSTPHPDIR)'/lib/php.ini.'
+	@echo '  Set mysql.default_socket properly in the php.ini, '
+	@echo '  to the same socket path as in ~/.my.cnf. '
+	@echo '  Restart apache server to take effect of the change.'
+	@echo 'Use "phpinfo();" in a php web page to see the value used.'
+	@echo '--------------------------------------------'
+	@echo '  '
+
+help:
+	@echo
+	@echo '--------------------------------------------'
+	@echo 'Folder Structure:'
+	@echo '  /home/user/source   -- where this makefile is.'
+	@echo '  /home/user/source/httpd-x.y.z  -- the apache source.'
+	@echo '  /home/user/source/mysql-x.y.z  -- the mysql source.'
+	@echo '  /home/user/source/php-x.y.z    -- the php source.'
+	@echo '  /home/user/servers  -- where to install servers.'
+	@echo '  /home/user/servers/apache    -- the apache server.'
+	@echo '  /home/user/servers/mysql     -- the mysql server.'
+	@echo '  /home/user/servers/php       -- the php server.'
+	@echo '  /home/user/servers/dbdata    -- the mysql database dir.'
+	@echo
+	@echo 'Build and Help Commands:'
+	@echo ' make -f <thismakefile> all   -- build and install all three.'
+	@echo ' make -f <thismakefile> bld1  -- build and install apache.'
+	@echo ' make -f <thismakefile> bld2  -- build and install mysql.'
+	@echo ' make -f <thismakefile> bld3  -- build and install php.'
+	@echo ' make -f <thismakefile> help1  -- see apache help.'
+	@echo ' make -f <thismakefile> help2  -- see mysql help.'
+	@echo ' make -f <thismakefile> help3  -- see php help.'
+	@echo ' make -f <thismakefile> helpadmin  -- Drupal phpMyAdmin help.'
+	@echo ' make -f <thismakefile> helpprereq -- required packages.'
+	@echo
+	@echo 'Build and Run Steps:'
+	@echo ' [0] See helpprereq for required packages. Install them first.'
+	@echo ' [1] Create ~/.my.cnf. See help2.'
+	@echo ' [2] Build and install apache, mysql, php.'
+	@echo ' [3] Configure and start apache. See help1 and help3.'
+	@echo ' [4] Configure and start mysql. See help2.'
+	@echo '     Be sure the <port>s in ~/.my.cnf are correct.'
+	@echo ' [5] See helpadmin for phpMyAdmin and Drupal instructions.'
+	@echo
+	@echo 'Must build and install in this order: apache, mysql, php.'
+	@echo '  Then install phpMyAdmin. Install drupal7 at last.'
+	@echo '--------------------------------------------'
+	@echo
+
+helpprereq:
+	@echo
+	@echo '--------------------------------------------'
+	@echo 'Required packages for apache:  gcc, gcc-c++. '
+	@echo 'Required packages for mysql:   cmake, ncurses-devel. '
+	@echo 'Required package for php:      libxml2-devel. '
+	@echo 'Reruired package for Drupal 7: libpng-devel. '
+	@echo '   Drupal needs php with-gd, -gd needs libpng-devel. '
+	@echo '--------------------------------------------'
+	@echo
+
+helpadmin:
+	@echo
+	@echo '--------------------------------------------'
+	@echo Put phpMyAdmin under a web folder. 
+	@echo   Configure with localhost and cookie authentication. 
+	@echo
+	@echo To install Drupal 7, use 127.0.0.1:\<port\> instead of localhost. 
+	@echo   Then edit settings.php, remove host and port, add unix_socket. 
+	@echo '--------------------------------------------'
+	@echo
+
