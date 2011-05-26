@@ -213,6 +213,11 @@ helpadmin:
 	@echo
 	@echo To install Drupal 7, use 127.0.0.1:\<port\> instead of localhost. 
 	@echo   Then edit settings.php, remove host and port, add unix_socket. 
+	@echo 
+	@echo For Drupal clean url, set apache configure file to:
+	@echo   <Directory "/path/to/your/drupal">
+	@echo       AllowOverride All
+	@echo   </Directory>
 	@echo '--------------------------------------------'
 	@echo
 
