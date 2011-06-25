@@ -1,12 +1,21 @@
 
+=================================================
+Basic Setup:
+
+[1] Use Your Credentials:
 <username>
 <you at emailprovider.com>
 
-git config --global user.name '<username>'
-git config --global user.email '<you at emailprovider.com'
+[2] Git Local Configure:
+git config user.name '<username>'
+git config user.email '<you at emailprovider.com'
 
-add a public key
+-Note: Do not use "--global" option.
 
+[3] Set ssh key:
+add a public key on github web page. 
+
+[4] Create Local Repo and Push to Github:
 mkdir UserLAMP
 cd UserLAMP
 git init
@@ -17,4 +26,6 @@ git remote add origin git@github.com:minghuascode/UserLAMP.git
 git push -u origin master
 
 git push -u --tags origin master
+
+=================================================
 
