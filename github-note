@@ -1,0 +1,20 @@
+
+<username>
+<you at emailprovider.com>
+
+git config --global user.name '<username>'
+git config --global user.email '<you at emailprovider.com'
+
+add a public key
+
+mkdir UserLAMP
+cd UserLAMP
+git init
+touch README
+git add README
+git commit -m 'first commit'
+git remote add origin git@github.com:minghuascode/UserLAMP.git
+git push -u origin master
+
+git push -u --tags origin master
+
