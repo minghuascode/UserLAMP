@@ -28,4 +28,25 @@ git push -u origin master
 git push -u --tags origin master
 
 =================================================
+Use Multiple Keys:
+
+http://help.github.com/multiple-ssh-keys/
+
+Edit ~/.ssh/config to set it to something like this: 
+
+  # Default GitHub user (joe)
+  Host github.com
+    HostName github.com
+    User git
+    IdentityFile /Users/joe/.ssh/id_rsa
+
+  # Client user (client)
+  Host github-client
+    HostName github.com
+    User git
+    IdentityFile /Users/joe/.ssh/id_rsa_client
+
+Then use 'git@github-client:<username>/<project>' as url. 
+
+=================================================
 
