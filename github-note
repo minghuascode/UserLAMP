@@ -49,4 +49,112 @@ Edit ~/.ssh/config to set it to something like this:
 Then use 'git@github-client:<username>/<project>' as url. 
 
 =================================================
+https://github.com/minghuadev/chromebook-linux-script/blob/master/a-setup/note-tips
+
+Remove accidental file Rakefile from git:
+===========================================
+$ git clone ...
+$ git filter-branch --force --index-filter \
+  'git rm --cached --ignore-unmatch Rakefile' \
+  --prune-empty --tag-name-filter cat -- --all
+$ git push origin master --force
+
+
+Reclaim space from git:
+=========================
+$ rm -rf .git/refs/original/
+$ git reflog expire --expire=now --all
+$ git gc --prune=now
+$ git gc --aggressive --prune=now
+
+
+Avoid RPC error in bit push:
+==============================
+$ git config http.postBuffer 524288000
+
+Set GIT_CURL_VERBOSE=1 to push if you see rpc error with result=18.
+
+
+=================================================
+https://github.com/minghuadev/chromebook-linux-script/blob/master/a-setup/step1-git-setup
+
+~/.netrc with machine credentials:
+
+ machine code.google.com login <login-name> password <password>
+
+
+ref: http://stackoverflow.com/questions/3562095/using-curl-to-get-a-https-webpage-in-windows-7
+  http://curl.haxx.se/ca/cacert.pem for https certificates.
+
+git config user.name <yourname>
+git config user.email <youremail@your.com>
+
+
+=================================================
+Check out a branch, push to master
+https://github.com/minghuadev/chromebook-linux-script/blob/master/ref-fc19-acer-c7/test-rebuild-kernel/fc19kb-note-checkout
+
+
+cloning kernel-next
+=====================
+
+  git clone https://git.chromium.org/git/chromiumos/third_party/kernel-next.git
+
+
+checkout origin/chromeos-3.8
+==============================
+ it takes 30 seconds with 1.4G space on disk.
+
+  git checkout origin/chromeos-3.8
+
+  [kernel-next]$ git branch
+  * (detached from origin/chromeos-3.8)
+    master
+
+  [kernel-next]$ git reflog
+  98d6fa9 HEAD@{0}: checkout: moving from master to origin/chromeos-3.8
+  9fe6206 HEAD@{1}: clone: from https://git.chromium.org/git/chromiumos/third_part
+
+
+push to chromeos-kernel-3.8
+=============================
+git log --pretty=format:%h | wc
+
+git log --pretty=format:%h >ttspecslist
+
+[kernel-next]$ tail ttspecslist
+2d137c2
+baaa2c5
+8d38ead
+1da177e
+
+[kernel-next]$ git push origin2 8d38ead:refs/heads/master
+
+
+=================================================
+Show branches with option -r and -a
+
+$ git branch
+* master
+
+$ git branch -a
+* master
+  origin/1-2-stable
+  origin/2-0-stable
+  origin/2-1-stable
+  origin/2-2-stable
+  origin/3-0-unstable
+  origin/HEAD
+  origin/master
+
+$ git branch -r
+  origin/1-2-stable
+  origin/2-0-stable
+  origin/2-1-stable
+  origin/2-2-stable
+  origin/3-0-unstable
+  origin/HEAD
+  origin/master
+
+=================================================
 
